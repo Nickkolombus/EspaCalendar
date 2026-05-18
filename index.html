@@ -1549,6 +1549,7 @@
       }
 
       let added = 0;
+      let updated = 0;
       let skipped = 0;
       const log = [];
 
@@ -1562,12 +1563,6 @@
         const dateKey = `${ey}-${pad(em)}-${pad(ed)}`;
         const title = item.name?.fi || item.name?.en || 'Nimetön tapahtuma';
 
-        const existing = eventDB[dateKey] || [];
-        if (existing.some(e => e.title === title)) {
-          skipped++;
-          return;
-        }
-
         const startTime = d.toLocaleTimeString('fi-FI', { timeZone: 'Europe/Helsinki', hour: '2-digit', minute: '2-digit' }).replace(':', '.');
         let durationStr = 'kesto 50m';
         if (item.end_time) {
@@ -1577,6 +1572,20 @@
           const hh = Math.floor(mins / 60);
           const mm = mins % 60;
           if (mins > 0) durationStr = `kesto ${hh}h ${pad(mm)}m`;
+        }
+
+        const existing = eventDB[dateKey] || [];
+        const existingEvent = existing.find(e => e.title === title);
+        if (existingEvent) {
+          if (existingEvent.time === startTime && existingEvent.duration === durationStr) {
+            skipped++;
+          } else {
+            existingEvent.time = startTime;
+            existingEvent.duration = durationStr;
+            updated++;
+            log.push(`${dateKey}: 🔄 ${title}`);
+          }
+          return;
         }
 
         const ev = {
@@ -1590,16 +1599,16 @@
         if (!eventDB[dateKey]) eventDB[dateKey] = [];
         eventDB[dateKey].push(ev);
         added++;
-        log.push(`${dateKey}: ${title}`);
+        log.push(`${dateKey}: ➕ ${title}`);
       });
 
       saveStorage();
       renderAll();
 
-      if (added === 0 && skipped === 0) {
+      if (added === 0 && updated === 0 && skipped === 0) {
         alert('Kuukaudelta ei löytynyt tapahtumia Espanlavalta.');
       } else {
-        let msg = `Linked Events -tuonti valmis!\nLisätty: ${added}\nOhitettu (jo kalenterissa): ${skipped}`;
+        let msg = `Linked Events -tuonti valmis!\nLisätty: ${added}\nPäivitetty: ${updated}\nOhitettu (muuttumattomat): ${skipped}`;
         if (log.length > 0) msg += '\n\n' + log.slice(0, 12).join('\n') + (log.length > 12 ? '\n...' : '');
         alert(msg);
       }

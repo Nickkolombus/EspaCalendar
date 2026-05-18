@@ -591,7 +591,7 @@
         </div>
         <div class="form-group">
           <label>Kesto</label>
-          <input type="text" id="inp-duration" placeholder="esim. 2h 0m">
+          <input type="text" id="inp-duration" placeholder="esim. 50m">
         </div>
       </div>
       <div class="form-group">
@@ -1211,7 +1211,7 @@
             t = d.toLocaleTimeString('fi-FI', { timeZone: 'Europe/Helsinki', hour: '2-digit', minute: '2-digit' });
           }
           document.getElementById('inp-time').value = t.replace(':', '.');
-          // Guess duration from end_time if available, otherwise default to 2h
+          // Guess duration from end_time if available, otherwise default to 50m
           if (item.end_time && item.start_time) {
             const s = new Date(item.start_time);
             const e = new Date(item.end_time);
@@ -1219,9 +1219,9 @@
             const h = Math.floor(mins / 60);
             const min = mins % 60;
             if (mins > 0) document.getElementById('inp-duration').value = `${h}h ${min}m`;
-            else document.getElementById('inp-duration').value = '2h 0m';
+            else document.getElementById('inp-duration').value = '50m';
           } else {
-            document.getElementById('inp-duration').value = '2h 0m';
+            document.getElementById('inp-duration').value = '50m';
           }
           selectStyle(randomStyle());
           resultsDiv.innerHTML = '<p style="color:green;font-size:12px;">Tapahtuma tuotu lomakkeelle. Voit muokata tietoja ja tallentaa.</p>';
@@ -1569,7 +1569,7 @@
         }
 
         const startTime = d.toLocaleTimeString('fi-FI', { timeZone: 'Europe/Helsinki', hour: '2-digit', minute: '2-digit' }).replace(':', '.');
-        let durationStr = 'kesto 2h 0m';
+        let durationStr = 'kesto 50m';
         if (item.end_time) {
           const s = new Date(item.start_time);
           const e = new Date(item.end_time);

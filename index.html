@@ -1126,11 +1126,11 @@
     let id = localStorage.getItem('espanlava_place_id_v2');
     if (id) return id;
     try {
-      const res = await fetch('https://api.hel.fi/linkedevents/v1/place/?text=espanlava');
+      const res = await fetch('https://api.hel.fi/linkedevents/v1/place/?text=espan%20lava');
       const data = await res.json();
       if (data.data && data.data.length > 0) {
         // Prefer exact name match or first result
-        const place = data.data.find(p => /espanlava/i.test(p.name?.fi || p.name?.en || '')) || data.data[0];
+        const place = data.data.find(p => /espan/i.test(p.name?.fi || p.name?.en || '')) || data.data[0];
         id = place.id; // e.g. tprek:...
         localStorage.setItem('espanlava_place_id_v2', id);
         return id;

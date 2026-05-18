@@ -1,0 +1,1929 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Työkalenteri</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: #f4f4f4;
+    color: #222;
+    padding: 20px;
+  }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 20px;
+  }
+
+  /* Header area */
+  .top-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .mini-calendar-wrap {
+    width: 160px;
+  }
+  .mini-calendar-wrap h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+  }
+  .mini-calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    font-size: 11px;
+    text-align: center;
+  }
+  .mini-calendar .day-label {
+    font-weight: bold;
+    font-size: 10px;
+  }
+  .mini-calendar .day {
+    padding: 2px;
+  }
+  .mini-calendar .other-month {
+    color: #bbb;
+  }
+
+  .month-title {
+    text-align: center;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .month-title h1 {
+    font-size: 56px;
+    font-weight: 300;
+    color: #b8d68c;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    line-height: 1;
+    margin: 0;
+  }
+  .nav-buttons {
+    margin-top: 8px;
+  }
+  .nav-buttons button, .toolbar button {
+    background: #eee;
+    border: 1px solid #ccc;
+    padding: 4px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    margin: 0 4px;
+  }
+  .nav-buttons button:hover, .toolbar button:hover {
+    background: #ddd;
+  }
+
+  /* Toolbar */
+  .toolbar {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Auth panel */
+  .auth-panel {
+    margin-bottom: 10px;
+    padding: 8px;
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .auth-panel label {
+    font-size: 12px;
+    font-weight: bold;
+  }
+  .auth-panel input {
+    flex: 1;
+    min-width: 180px;
+    padding: 4px;
+    border: 1px solid #ccc;
+  }
+  .auth-panel button {
+    padding: 4px 10px;
+    cursor: pointer;
+  }
+  #auth-status {
+    font-size: 12px;
+    color: #080;
+  }
+  .auth-help {
+    width: 100%;
+    font-size: 12px;
+    color: #555;
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 8px;
+    display: none;
+  }
+  .auth-help.active { display: block; }
+  .auth-help a { color: #2266aa; }
+
+  /* Main calendar */
+  .main-calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    border-top: 2px solid #444;
+    border-left: 1px solid #888;
+  }
+  .day-header {
+    background: #444;
+    color: #fff;
+    text-align: center;
+    padding: 6px 0;
+    font-weight: bold;
+    font-size: 13px;
+    text-transform: uppercase;
+    border-right: 1px solid #666;
+    border-bottom: 2px solid #444;
+  }
+  .day-cell {
+    border-right: 1px solid #888;
+    border-bottom: 1px solid #888;
+    min-height: 110px;
+    padding: 4px;
+    position: relative;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+  }
+  .day-cell.other-month {
+    background: #e0e0e0;
+    color: #555;
+  }
+  .day-number {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  .events {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* Event blocks */
+  .event {
+    padding: 6px 6px;
+    font-size: 12px;
+    line-height: 1.3;
+    border-radius: 0;
+    cursor: default;
+    flex-shrink: 0;
+  }
+  .event-title {
+    font-weight: 600;
+    font-style: italic;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .event-meta {
+    font-size: 11px;
+    color: #5599aa;
+    display: block;
+  }
+
+  /* Colors matching the image */
+  .event-blue { background: #8ee0f0; color: #fff; }
+  .event-blue .event-title { color: #fff; }
+  .event-blue .event-meta { color: #e0f8ff; }
+
+  .event-cyan { background: #70d8f0; color: #fff; }
+  .event-cyan .event-title { color: #fff; }
+  .event-cyan .event-meta { color: #e0f8ff; }
+
+  .event-peach { background: #ffe0cc; color: #c65d00; }
+  .event-peach .event-title { color: #c65d00; }
+  .event-peach .event-meta { color: #88bbcc; }
+
+  .event-salmon { background: #ffdac8; color: #cc5500; }
+  .event-salmon .event-title { color: #cc5500; }
+  .event-salmon .event-meta { color: #77aacc; }
+
+  .event-red { background: #cc0000; color: #fff; }
+  .event-red .event-title { color: #fff; font-style: italic; font-weight: 700; }
+  .event-red .event-meta { color: #aaddff; }
+
+  .event-green { background: #a8d46e; color: #fff; }
+  .event-green .event-title { color: #fff; }
+  .event-green .event-meta { color: #e0f8ff; }
+
+  .event-darkgreen { background: #44bb44; color: #fff; }
+  .event-darkgreen .event-title { color: #fff; font-style: italic; font-weight: 700; }
+  .event-darkgreen .event-meta { color: #e0f8ff; }
+
+  .event-yellow { background: #e8b058; color: #fff; }
+  .event-yellow .event-title { color: #fff; }
+  .event-yellow .event-meta { color: #e0f8ff; }
+
+  .event-dotted {
+    background-color: #fff;
+    background-image: radial-gradient(circle, #888 1px, transparent 1px);
+    background-size: 4px 4px;
+    color: #666;
+    font-style: italic;
+  }
+  .event-dotted .event-title { color: #666; font-style: italic; }
+  .event-dotted .event-meta { color: #88bbcc; }
+
+  .event-plain {
+    background: transparent;
+    color: #999;
+    padding-left: 2px;
+  }
+  .event-plain .event-title { color: #bbb; font-style: italic; font-weight: 400; }
+  .event-plain .event-meta { color: #88bbcc; }
+
+  .event-beige { background: #f5f0e8; color: #cc5555; }
+  .event-beige .event-title { color: #cc5555; font-weight: 700; }
+  .event-beige .event-meta { color: #88bbcc; }
+
+  .event-grayblue { background: #eef4f8; color: #446688; }
+  .event-grayblue .event-title { color: #446688; font-style: italic; }
+  .event-grayblue .event-meta { color: #88bbcc; }
+
+  .event-purple { background: #c8a8e8; color: #fff; }
+  .event-purple .event-title { color: #fff; }
+  .event-purple .event-meta { color: #f0e8ff; }
+
+  .event-pink { background: #f0a8d0; color: #fff; }
+  .event-pink .event-title { color: #fff; }
+  .event-pink .event-meta { color: #ffe8f4; }
+
+  .event-teal { background: #40c0b0; color: #fff; }
+  .event-teal .event-title { color: #fff; }
+  .event-teal .event-meta { color: #e0f8f4; }
+
+  .event-orange { background: #f08020; color: #fff; }
+  .event-orange .event-title { color: #fff; }
+  .event-orange .event-meta { color: #ffe8d0; }
+
+  .event-navy { background: #304860; color: #fff; }
+  .event-navy .event-title { color: #fff; }
+  .event-navy .event-meta { color: #a0c0e0; }
+
+  .event-lime { background: #c8e850; color: #445500; }
+  .event-lime .event-title { color: #445500; }
+  .event-lime .event-meta { color: #668822; }
+
+  .event-rose { background: #e86080; color: #fff; }
+  .event-rose .event-title { color: #fff; }
+  .event-rose .event-meta { color: #ffd0d8; }
+
+  .event-olive { background: #a0a040; color: #fff; }
+  .event-olive .event-title { color: #fff; }
+  .event-olive .event-meta { color: #f0f0d0; }
+
+  .event-gray { background: #c0c0c0; color: #444; }
+  .event-gray .event-title { color: #444; }
+  .event-gray .event-meta { color: #666; }
+
+  .event-mint { background: #a8f0c8; color: #226644; }
+  .event-mint .event-title { color: #226644; }
+  .event-mint .event-meta { color: #448866; }
+
+  /* Comment block */
+  .day-comment {
+    margin-top: auto;
+    padding: 4px;
+    background: #fffacd;
+    border: 1px dotted #ddb;
+    font-size: 11px;
+    font-style: italic;
+    color: #554;
+    word-break: break-word;
+  }
+
+  /* Drag & drop */
+  .day-cell.drag-over {
+    background: #d0f0ff !important;
+    outline: 2px dashed #4488cc;
+  }
+  .event {
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .event:active {
+    cursor: grabbing;
+  }
+  .event.selected {
+    outline: 3px solid #ffcc00;
+    outline-offset: 2px;
+    box-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
+    z-index: 2;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal-card {
+    background: #fff;
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 1px solid #888;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #444;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .modal-header h2 { font-size: 16px; margin: 0; }
+  .modal-header button {
+    background: none; border: none; color: #fff; font-size: 22px; cursor: pointer; line-height: 1;
+  }
+  .modal-body { padding: 16px; }
+  .modal-footer {
+    padding: 12px 16px;
+    border-top: 1px solid #ddd;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+  .modal-footer button {
+    padding: 6px 12px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    background: #eee;
+  }
+  .modal-footer button:hover { background: #ddd; }
+  .modal-footer button.primary { background: #444; color: #fff; border-color: #444; }
+  .modal-footer button.primary:hover { background: #333; }
+
+  .form-group { margin-bottom: 12px; }
+  .form-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 6px;
+    border: 1px solid #ccc;
+    font-family: inherit;
+    font-size: 13px;
+  }
+  .form-group textarea { min-height: 60px; resize: vertical; }
+  .style-picker { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .style-swatch {
+    width: 26px; height: 26px; border: 2px solid transparent; cursor: pointer;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+  }
+  .style-swatch.selected { border-color: #222; box-shadow: 0 0 0 2px #fff inset; }
+
+  .modal-event-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    background: #f4f4f4;
+    margin-bottom: 6px;
+    border-left: 4px solid #ccc;
+  }
+  .linked-result {
+    border: 1px solid #ccc;
+    padding: 8px;
+    margin-top: 6px;
+    background: #f9f9f9;
+    cursor: pointer;
+  }
+  .linked-result:hover { background: #eef; }
+
+  .settings-toggle {
+    display: none;
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    body { padding: 4px; }
+    .container { padding: 8px; border: none; overflow-x: auto; }
+    .top-header { flex-direction: column; align-items: center; gap: 8px; }
+    .mini-calendar-wrap { display: none; }
+    .month-title h1 { font-size: 32px; letter-spacing: 2px; }
+    .nav-buttons button { font-size: 12px; padding: 6px 10px; }
+    .settings-toggle {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 8px;
+      font-size: 16px;
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+    .settings-area.mobile-collapsed {
+      display: none;
+    }
+    .toolbar { flex-direction: column; align-items: stretch; }
+    .toolbar button { width: 100%; margin: 2px 0; font-size: 13px; padding: 10px; }
+    .auth-panel { flex-direction: column; align-items: stretch; }
+    .auth-panel input { width: 100%; min-width: unset; }
+    .auth-panel button { width: 100%; margin: 4px 0; padding: 10px; }
+    .main-calendar { min-width: 720px; }
+    .day-header { font-size: 10px; padding: 4px 0; }
+    .day-cell { min-height: 70px; padding: 2px; }
+    .day-number { font-size: 11px; }
+    .event { padding: 3px; font-size: 10px; }
+    .event-title { font-size: 10px; }
+    .event-meta { display: none; }
+    .day-comment { font-size: 9px; padding: 2px; }
+    .modal-card { max-width: 96vw; width: 96vw; }
+    .modal-header h2 { font-size: 14px; }
+    .form-group input, .form-group select, .form-group textarea { font-size: 16px; padding: 10px; }
+    .style-swatch { width: 32px; height: 32px; }
+  }
+
+  /* Event popup modal */
+  .event-popup-card { max-width: 900px; width: 90vw; max-height: 90vh; }
+  .event-popup-body { display: flex; flex-direction: row; height: 70vh; overflow: hidden; }
+  .event-popup-left { width: 55%; border-right: 1px solid #ddd; overflow-y: auto; padding: 0; background: #fafafa; }
+  .event-popup-right { width: 45%; padding: 24px; overflow-y: auto; }
+  .day-timeline { position: relative; }
+  .time-slot { height: 28px; border-bottom: 1px solid #e8e8e8; position: relative; }
+  .time-slot.hour-slot { border-bottom-color: #bbb; }
+  .time-label { position: absolute; left: 6px; top: -6px; font-size: 10px; color: #666; width: 36px; text-align: right; font-weight: 600; }
+  .time-slot:not(.hour-slot) .time-label { color: #aaa; font-weight: 400; font-size: 9px; }
+  .timeline-event { position: absolute; left: 48px; right: 8px; border-radius: 4px; padding: 5px 8px; font-size: 12px; cursor: grab; box-shadow: 0 2px 6px rgba(0,0,0,0.15); z-index: 10; overflow: hidden; user-select: none; -webkit-user-select: none; }
+  .timeline-event:active { cursor: grabbing; box-shadow: 0 4px 12px rgba(0,0,0,0.25); z-index: 20; }
+  .timeline-event.timeline-active { outline: 2px solid #444; outline-offset: 1px; z-index: 15; }
+  .timeline-event .te-title { font-weight: 600; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .timeline-event .te-time { font-size: 10px; opacity: 0.9; display: block; }
+  .info-group { margin-bottom: 20px; }
+  .info-group label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #888; margin-bottom: 4px; }
+  .info-group .info-value { font-size: 15px; color: #222; line-height: 1.4; }
+  .info-group .info-value.large { font-size: 22px; font-weight: 600; }
+  .info-style-swatch { width: 40px; height: 40px; border: 2px solid #ddd; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); }
+  .day-events-list { margin-top: 16px; padding-top: 16px; border-top: 1px solid #eee; }
+  .day-events-list h4 { font-size: 12px; text-transform: uppercase; color: #888; margin-bottom: 8px; }
+  .mini-event { padding: 8px; margin-bottom: 6px; font-size: 12px; border-left: 3px solid #ccc; background: #f8f8f8; cursor: pointer; color: #222 !important; }
+  .mini-event:hover { background: #f0f0f0; }
+  .mini-event.active { border-left-width: 5px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+  @media (max-width: 768px) {
+    .event-popup-card { max-width: 96vw; width: 96vw; }
+    .event-popup-body { flex-direction: column; height: auto; max-height: 80vh; }
+    .event-popup-left, .event-popup-right { width: 100%; border-right: none; }
+    .event-popup-left { max-height: 350px; border-bottom: 1px solid #ddd; }
+  }
+
+  /* Print */
+  @media print {
+    body { background: white; padding: 0; }
+    .container { border: none; max-width: 100%; }
+    .nav-buttons, .auth-panel, .toolbar, #day-modal { display: none !important; }
+    .day-cell { page-break-inside: avoid; min-height: 90px; }
+    .event, .day-comment { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="top-header">
+    <div class="mini-calendar-wrap">
+      <h3 id="mini-prev-title"></h3>
+      <div class="mini-calendar" id="mini-prev"></div>
+    </div>
+    <div class="month-title">
+      <h1 id="main-title"></h1>
+      <div class="nav-buttons">
+        <button onclick="changeMonth(-1)">&#9664; Edellinen</button>
+        <button onclick="goToToday()">Tänään</button>
+        <button onclick="changeMonth(1)">Seuraava &#9654;</button>
+      </div>
+    </div>
+    <div class="mini-calendar-wrap">
+      <h3 id="mini-next-title"></h3>
+      <div class="mini-calendar" id="mini-next"></div>
+    </div>
+  </div>
+
+  <button class="settings-toggle" onclick="toggleSettings()">⚙️ Asetukset</button>
+  <div class="settings-area mobile-collapsed" id="settings-area">
+    <div class="auth-panel" id="auth-panel">
+      <button onclick="connectGoogle()">🔗 Yhdistä Google Kalenteriin</button>
+      <span style="font-size:12px;color:#555;">Kohde: <strong>primary</strong> (oma kalenteri)</span>
+      <span id="auth-status"></span>
+    </div>
+
+    <div class="toolbar">
+      <button onclick="window.print()">🖨️ Tulosta kuukausinäkymä</button>
+      <button id="btn-import-month" onclick="importMonthFromLinkedEvents()">🔍 Lisää koko kuukausi Linked Eventsista (Espanlava)</button>
+      <button id="btn-push-month" onclick="pushMonthToGoogle()">📤 Vie kuukausi Googleen</button>
+      <button id="btn-pull-google" onclick="pullFromGoogle()">🔗 Synkronoi Google Kalenterista</button>
+    </div>
+  </div>
+
+  <div class="main-calendar" id="main-calendar"></div>
+</div>
+
+<!-- Event Popup Modal -->
+<div id="event-popup-modal" class="modal-overlay">
+  <div class="modal-card event-popup-card">
+    <div class="modal-header">
+      <h2 id="event-popup-header">Tapahtuma</h2>
+      <button onclick="closeEventPopup()">&times;</button>
+    </div>
+    <div class="event-popup-body">
+      <div class="event-popup-left">
+        <div class="day-timeline" id="day-timeline"></div>
+      </div>
+      <div class="event-popup-right" id="event-popup-info"></div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="openDayModalFromPopup()">Muokkaa päivää</button>
+      <button onclick="closeEventPopup()">Sulje</button>
+    </div>
+  </div>
+</div>
+
+<!-- Day Edit Modal -->
+<div id="day-modal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 id="modal-date-title">Päivämäärä</h2>
+      <button onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="modal-existing-events" style="margin-bottom:12px;"></div>
+
+      <div class="form-group">
+        <label>Otsikko</label>
+        <input type="text" id="inp-title" placeholder="Tapahtuman nimi">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="form-group">
+          <label>Aika</label>
+          <input type="text" id="inp-time" placeholder="esim. 19.30">
+        </div>
+        <div class="form-group">
+          <label>Kesto</label>
+          <input type="text" id="inp-duration" placeholder="esim. 2h 0m">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Väliaika</label>
+        <select id="inp-intermission">
+          <option value="">-</option>
+          <option value="on väliaika">on väliaika</option>
+          <option value="ei väliaika">ei väliaika</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tyyli / Väri</label>
+        <div class="style-picker" id="style-picker"></div>
+      </div>
+      <div class="form-group">
+        <label>Päivän kommentti</label>
+        <textarea id="inp-comment" placeholder="Kirjoita vapaa kommentti tälle päivälle..."></textarea>
+      </div>
+
+      <div id="linked-events-results" style="max-height:260px;overflow-y:auto;border:1px solid #eee;padding:4px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="fetchLinkedEvents()">🔍 Hae Linked Events (Espanlava)</button>
+      <button class="primary" onclick="saveDay()">💾 Tallenna</button>
+      <button onclick="closeModal()">Peruuta</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ======================
+  //  CONFIG & DEFAULT DATA
+  // ======================
+  const DEFAULT_EVENTS = {};
+
+  const STYLES = ['blue','cyan','peach','salmon','red','green','darkgreen','yellow','dotted','plain','beige','grayblue','purple','pink','teal','orange','navy','lime','rose','olive','gray','mint'];
+  const MONTH_NAMES = [
+    "Tammikuu", "Helmikuu", "Maaliskuu", "Huhtikuu", "Toukokuu",
+    "Kesäkuu", "Heinäkuu", "Elokuu", "Syyskuu", "Lokakuu",
+    "Marraskuu", "Joulukuu"
+  ];
+  const SHORT_DAYS = ["Ma", "Ti", "Ke", "To", "Pe", "La", "Su"];
+  const WEEKDAYS = ['Sunnuntai','Maanantai','Tiistai','Keskiviikko','Torstai','Perjantai','Lauantai'];
+
+  // ======================
+  //  STATE
+  // ======================
+  let eventDB = {};
+  let commentDB = {};
+  let currentYear = 2026;
+  let currentMonth = 4; // May
+  let selectedStyle = 'plain';
+  let currentModalDate = null;
+  let editingIndex = -1;
+  let selectedEvents = []; // { dateKey, index }
+  const HARDCODED_CLIENT_ID = '973960993530-2p7becsal2re7brmlqtogsq239t9982o.apps.googleusercontent.com';
+  const HARDCODED_CALENDAR_ID = 'primary';
+  let tokenClient = null;
+  let googleToken = null;
+  let googleTokenExp = 0;
+  let lastLinkedResults = [];
+  let popupEventDateKey = null;
+  let popupEventIndex = null;
+  let timelineDrag = null;
+  const TIMELINE_START_HOUR = 7;
+  const TIMELINE_END_HOUR = 26; // 02:00 next day
+  const SLOT_HEIGHT = 28;
+  let lastDragTime = 0;
+
+  // Supabase
+  const SUPABASE_URL = 'https://rvuzvmsdcrlmmyobzoen.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2dXp2bXNkY3JsbW15b2J6b2VuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NzI4NjcsImV4cCI6MjA5NDI0ODg2N30.wgwfesqQPqkhjqqRPWMo251yQ4UxAPubIX1Sud9CTbk';
+
+  // ======================
+  //  UTILS
+  // ======================
+  const COLOR_POOL = ['blue','cyan','peach','salmon','red','green','darkgreen','yellow','beige','grayblue','purple','pink','teal','orange','navy','lime','rose','olive','mint'];
+  function randomStyle() {
+    return COLOR_POOL[Math.floor(Math.random() * COLOR_POOL.length)];
+  }
+
+  function pad(n) { return n < 10 ? '0' + n : n; }
+  function fmtDate(y, m, d) { return `${y}-${pad(m + 1)}-${pad(d)}`; }
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+  function sortEventsByTime(events) {
+    return [...events].sort((a, b) => {
+      const ta = parseTime(a.time);
+      const tb = parseTime(b.time);
+      if (!ta && !tb) return 0;
+      if (!ta) return 1;
+      if (!tb) return -1;
+      return (ta.hh * 60 + ta.mm) - (tb.hh * 60 + tb.mm);
+    });
+  }
+  function formatDateNice(dateKey) {
+    const [y, m, d] = dateKey.split('-').map(Number);
+    const wd = WEEKDAYS[new Date(y, m-1, d).getDay()];
+    return `${wd} ${d}.${m}.${y}`;
+  }
+
+  // ======================
+  //  STORAGE
+  // ======================
+  async function loadStorage() {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/calendar_state?id=eq.espanlava&select=*`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      });
+      const data = await res.json();
+      if (data && data[0]) {
+        eventDB = data[0].events || JSON.parse(JSON.stringify(DEFAULT_EVENTS));
+        commentDB = data[0].comments || {};
+      } else {
+        eventDB = JSON.parse(JSON.stringify(DEFAULT_EVENTS));
+        commentDB = {};
+      }
+    } catch (e) {
+      console.error('Load failed', e);
+      eventDB = JSON.parse(JSON.stringify(DEFAULT_EVENTS));
+      commentDB = {};
+    }
+  }
+
+  async function saveStorage() {
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/calendar_state`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify({
+          id: 'espanlava',
+          events: eventDB,
+          comments: commentDB,
+          updated_at: new Date().toISOString()
+        })
+      });
+    } catch (e) {
+      console.error('Save failed', e);
+    }
+  }
+
+  // ======================
+  //  CALENDAR RENDER
+  // ======================
+  function getMonthData(year, month) {
+    const firstDay = new Date(year, month, 1);
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    let startIdx = firstDay.getDay() - 1;
+    if (startIdx < 0) startIdx = 6;
+    return { daysInMonth, startIdx };
+  }
+
+  function renderMiniCalendar(elId, titleId, year, month) {
+    const { daysInMonth, startIdx } = getMonthData(year, month);
+    const prevDays = new Date(year, month, 0).getDate();
+    let html = "";
+    SHORT_DAYS.forEach(d => { html += `<div class="day-label">${d}</div>`; });
+    for (let i = startIdx - 1; i >= 0; i--) {
+      html += `<div class="day other-month">${prevDays - i}</div>`;
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      html += `<div class="day">${d}</div>`;
+    }
+    const totalCells = startIdx + daysInMonth;
+    const remaining = (42 - totalCells) % 42;
+    for (let d = 1; d <= remaining; d++) {
+      html += `<div class="day other-month">${d}</div>`;
+    }
+    document.getElementById(elId).innerHTML = html;
+    document.getElementById(titleId).textContent = `${MONTH_NAMES[month].toUpperCase()} ${year}`;
+  }
+
+  function renderMainCalendar(year, month) {
+    const { daysInMonth, startIdx } = getMonthData(year, month);
+    const prevMonthDays = new Date(year, month, 0).getDate();
+    const calendar = document.getElementById("main-calendar");
+    let html = "";
+
+    SHORT_DAYS.forEach(d => {
+      html += `<div class="day-header">${d}</div>`;
+    });
+
+    for (let i = startIdx - 1; i >= 0; i--) {
+      const d = prevMonthDays - i;
+      html += `<div class="day-cell other-month"><div class="day-number">${d}</div></div>`;
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateKey = fmtDate(year, month, d);
+      const dayEvents = sortEventsByTime(eventDB[dateKey] || []);
+      let eventsHtml = "";
+      dayEvents.forEach((ev, idx) => {
+        const metaParts = [ev.time, ev.duration, ev.intermission].filter(Boolean).join(", ");
+        const isSelected = selectedEvents.some(s => s.dateKey === dateKey && s.index === idx);
+        eventsHtml += `
+          <div class="event event-${ev.style} ${isSelected ? 'selected' : ''}" draggable="true" onmousedown="eventMouseDown(event, '${dateKey}', ${idx})" onclick="eventClick(event, '${dateKey}', ${idx})" ondragstart="dragStart(event, '${dateKey}', ${idx})" ondragend="dragEnd(event)">
+            <span class="event-title">${escapeHtml(ev.title)}</span>
+            ${metaParts ? `<span class="event-meta">${escapeHtml(metaParts)}</span>` : ""}
+          </div>
+        `;
+      });
+      const commentHtml = commentDB[dateKey]
+        ? `<div class="day-comment">${escapeHtml(commentDB[dateKey])}</div>`
+        : "";
+      html += `
+        <div class="day-cell" oncontextmenu="openDayModal('${dateKey}'); return false;" ondragover="allowDrag(event)" ondrop="dropEvent(event, '${dateKey}')" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+          <div class="day-number">${d}</div>
+          <div class="events">${eventsHtml}</div>
+          ${commentHtml}
+        </div>
+      `;
+    }
+
+    const totalCells = startIdx + daysInMonth;
+    const remaining = (7 - (totalCells % 7)) % 7;
+    for (let d = 1; d <= remaining; d++) {
+      html += `<div class="day-cell other-month"><div class="day-number">${d}</div></div>`;
+    }
+
+    calendar.innerHTML = html;
+    document.getElementById("main-title").textContent = `${MONTH_NAMES[month].toUpperCase()} ${year}`;
+  }
+
+  // ======================
+  //  DRAG & DROP
+  // ======================
+  function eventMouseDown(e, dateKey, index) {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleEventSelection(dateKey, index);
+    }
+  }
+  function toggleEventSelection(dateKey, index) {
+    const pos = selectedEvents.findIndex(s => s.dateKey === dateKey && s.index === index);
+    if (pos >= 0) {
+      selectedEvents.splice(pos, 1);
+    } else {
+      selectedEvents.push({ dateKey, index });
+    }
+    renderAll();
+  }
+  function dragStart(e, dateKey, index) {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      return;
+    }
+    lastDragTime = Date.now();
+    selectedEvents = []; // Clear selection on drag
+    e.dataTransfer.setData('text/plain', JSON.stringify({ dateKey, index }));
+    e.dataTransfer.effectAllowed = 'move';
+  }
+  function dragEnd(e) {
+    // click suppression handled by timestamp
+  }
+  function allowDrag(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }
+  function dragEnter(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.add('drag-over');
+  }
+  function dragLeave(e) {
+    e.stopPropagation();
+    e.currentTarget.classList.remove('drag-over');
+  }
+  function dropEvent(e, targetDateKey) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.remove('drag-over');
+    const data = e.dataTransfer.getData('text/plain');
+    if (!data) return;
+    let parsed;
+    try { parsed = JSON.parse(data); } catch (err) { return; }
+    const { dateKey: sourceDateKey, index } = parsed;
+    if (sourceDateKey === targetDateKey) return;
+    if (!eventDB[sourceDateKey] || !eventDB[sourceDateKey][index]) return;
+
+    const ev = eventDB[sourceDateKey][index];
+    // Remove from source
+    eventDB[sourceDateKey].splice(index, 1);
+    if (eventDB[sourceDateKey].length === 0) delete eventDB[sourceDateKey];
+    // Add to target
+    if (!eventDB[targetDateKey]) eventDB[targetDateKey] = [];
+    eventDB[targetDateKey].push(ev);
+
+    saveStorage();
+    renderAll();
+  }
+
+  // ======================
+  //  GLOBAL DROP = DELETE
+  // ======================
+  document.body.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  });
+  document.body.addEventListener('drop', (e) => {
+    const data = e.dataTransfer.getData('text/plain');
+    if (!data) return;
+    let parsed;
+    try { parsed = JSON.parse(data); } catch (err) { return; }
+    const { dateKey, index } = parsed;
+    if (!eventDB[dateKey] || !eventDB[dateKey][index]) return;
+
+    const ev = eventDB[dateKey][index];
+    if (confirm(`Poista tapahtuma "${ev.title}"?`)) {
+      const googleId = ev.googleId;
+      eventDB[dateKey].splice(index, 1);
+      if (eventDB[dateKey].length === 0) delete eventDB[dateKey];
+      selectedEvents = [];
+      saveStorage();
+      renderAll();
+      if (googleId) deleteFromGoogle(googleId);
+    }
+  });
+
+  // ======================
+  //  BULK DELETE (Delete key)
+  // ======================
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Delete' && selectedEvents.length > 0) {
+      e.preventDefault();
+      const titles = selectedEvents.map(s => `"${eventDB[s.dateKey][s.index].title}"`).join('\n');
+      if (confirm(`Poista ${selectedEvents.length} valittua tapahtumaa?\n\n${titles}`)) {
+        selectedEvents.sort((a, b) => {
+          if (a.dateKey !== b.dateKey) return a.dateKey.localeCompare(b.dateKey);
+          return b.index - a.index; // descending index so splicing doesn't shift
+        });
+        const googleIdsToDelete = [];
+        selectedEvents.forEach(({ dateKey, index }) => {
+          if (eventDB[dateKey] && eventDB[dateKey][index]) {
+            const googleId = eventDB[dateKey][index].googleId;
+            eventDB[dateKey].splice(index, 1);
+            if (eventDB[dateKey].length === 0) delete eventDB[dateKey];
+            if (googleId) googleIdsToDelete.push(googleId);
+          }
+        });
+        selectedEvents = [];
+        saveStorage();
+        renderAll();
+        googleIdsToDelete.forEach(id => deleteFromGoogle(id));
+      }
+    }
+  });
+
+  // ======================
+  //  CALENDAR RENDER (continued)
+  // ======================
+  function renderAll() {
+    const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+    const nextMonth = currentMonth === 11 ? 0 : currentMonth + 1;
+    const nextYear = currentMonth === 11 ? currentYear + 1 : currentYear;
+    renderMiniCalendar("mini-prev", "mini-prev-title", prevYear, prevMonth);
+    renderMiniCalendar("mini-next", "mini-next-title", nextYear, nextMonth);
+    renderMainCalendar(currentYear, currentMonth);
+  }
+
+  function changeMonth(delta) {
+    currentMonth += delta;
+    if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+    if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+    renderAll();
+  }
+  function goToToday() {
+    const now = new Date();
+    currentYear = now.getFullYear();
+    currentMonth = now.getMonth();
+    renderAll();
+  }
+
+  // ======================
+  //  MODAL
+  // ======================
+  function buildStylePicker() {
+    const container = document.getElementById('style-picker');
+    container.innerHTML = '';
+    STYLES.forEach(s => {
+      const div = document.createElement('div');
+      div.className = `style-swatch event-${s}`;
+      div.dataset.style = s;
+      div.title = s;
+      div.onclick = () => selectStyle(s);
+      container.appendChild(div);
+    });
+  }
+  function selectStyle(s) {
+    selectedStyle = s;
+    document.querySelectorAll('.style-swatch').forEach(el => {
+      el.classList.toggle('selected', el.dataset.style === s);
+    });
+  }
+
+  function openDayModal(dateKey) {
+    currentModalDate = dateKey;
+    document.getElementById('modal-date-title').textContent = formatDateNice(dateKey);
+    document.getElementById('inp-comment').value = commentDB[dateKey] || '';
+    resetForm();
+    renderModalEvents();
+    // If exactly one event, auto-load it into the edit form
+    const evs = eventDB[dateKey] || [];
+    if (evs.length === 1) {
+      editEvent(0);
+    }
+    document.getElementById('day-modal').classList.add('active');
+  }
+  function closeModal() {
+    document.getElementById('day-modal').classList.remove('active');
+    currentModalDate = null;
+    lastLinkedResults = [];
+  }
+  document.getElementById('day-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'day-modal') closeModal();
+  });
+
+  function resetForm() {
+    editingIndex = -1;
+    document.getElementById('inp-title').value = '';
+    document.getElementById('inp-time').value = '';
+    document.getElementById('inp-duration').value = '';
+    document.getElementById('inp-intermission').value = '';
+    document.getElementById('linked-events-results').innerHTML = '';
+    selectStyle(randomStyle());
+  }
+
+  function renderModalEvents() {
+    const list = document.getElementById('modal-existing-events');
+    const evs = eventDB[currentModalDate] || [];
+    if (evs.length === 0) {
+      list.innerHTML = '<p style="color:#999;font-size:12px;">Ei tapahtumia tälle päivälle. Lisää uusi alla.</p>';
+      return;
+    }
+    let html = '<h4 style="margin-bottom:8px;font-size:13px;">Tämän päivän tapahtumat:</h4>';
+    evs.forEach((ev, i) => {
+      const meta = [ev.time, ev.duration, ev.intermission].filter(Boolean).join(', ');
+      html += `
+        <div class="modal-event-item">
+          <div>
+            <strong>${escapeHtml(ev.title)}</strong>
+            <div style="font-size:11px;color:#666;">${escapeHtml(meta)}</div>
+          </div>
+          <div>
+            <button onclick="editEvent(${i})" style="font-size:11px;">Muokkaa</button>
+            <button onclick="deleteEvent(${i})" style="font-size:11px;color:#c00;">Poista</button>
+          </div>
+        </div>
+      `;
+    });
+    list.innerHTML = html;
+  }
+
+  function editEvent(index) {
+    editingIndex = index;
+    const ev = eventDB[currentModalDate][index];
+    document.getElementById('inp-title').value = ev.title;
+    document.getElementById('inp-time').value = ev.time;
+    document.getElementById('inp-duration').value = ev.duration;
+    document.getElementById('inp-intermission').value = ev.intermission;
+    selectStyle(ev.style);
+    // Scroll to form
+    document.getElementById('inp-title').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function deleteEvent(index) {
+    if (!confirm('Poista tämä tapahtuma?')) return;
+    const googleId = eventDB[currentModalDate][index]?.googleId;
+    eventDB[currentModalDate].splice(index, 1);
+    if (eventDB[currentModalDate].length === 0) delete eventDB[currentModalDate];
+    saveStorage();
+    renderModalEvents();
+    renderAll();
+    if (googleId) deleteFromGoogle(googleId);
+  }
+
+  function saveDay() {
+    const title = document.getElementById('inp-title').value.trim();
+    const ev = {
+      title,
+      time: document.getElementById('inp-time').value.trim(),
+      duration: document.getElementById('inp-duration').value.trim(),
+      intermission: document.getElementById('inp-intermission').value,
+      style: selectedStyle
+    };
+
+    if (title) {
+      if (!eventDB[currentModalDate]) eventDB[currentModalDate] = [];
+      if (editingIndex >= 0) {
+        eventDB[currentModalDate][editingIndex] = ev;
+      } else {
+        eventDB[currentModalDate].push(ev);
+      }
+    }
+
+    const comment = document.getElementById('inp-comment').value.trim();
+    if (comment) commentDB[currentModalDate] = comment;
+    else delete commentDB[currentModalDate];
+
+    saveStorage();
+    renderAll();
+
+    if (googleToken && Date.now() < googleTokenExp && title) {
+      pushToGoogle(ev, currentModalDate).then(() => {
+        saveStorage();
+        alert('Tapahtuma tallennettu ja lähetetty Google Kalenteriin.');
+        closeModal();
+      }).catch(err => {
+        alert('Tallennettu paikallisesti, mutta Google-lähetys epäonnistui: ' + err.message);
+      });
+    } else {
+      if (title) closeModal();
+      else renderModalEvents(); // just refreshed comment
+    }
+  }
+
+  // ======================
+  //  LINKED EVENTS (ESPANLAVA)
+  // ======================
+  async function resolveEspanlavaPlace() {
+    let id = localStorage.getItem('espanlava_place_id_v2');
+    if (id) return id;
+    try {
+      const res = await fetch('https://api.hel.fi/linkedevents/v1/place/?text=espanlava');
+      const data = await res.json();
+      if (data.data && data.data.length > 0) {
+        // Prefer exact name match or first result
+        const place = data.data.find(p => /espanlava/i.test(p.name?.fi || p.name?.en || '')) || data.data[0];
+        id = place.id; // e.g. tprek:...
+        localStorage.setItem('espanlava_place_id_v2', id);
+        return id;
+      }
+    } catch (e) {
+      console.error('Place resolve error', e);
+    }
+    return null;
+  }
+
+  async function fetchLinkedEvents() {
+    const resultsDiv = document.getElementById('linked-events-results');
+    resultsDiv.innerHTML = '<p>Ladataan Linked Events -tietoja...</p>';
+    const placeId = await resolveEspanlavaPlace();
+    if (!placeId) {
+      resultsDiv.innerHTML = '<p style="color:red;">Espanlavan paikka-ID:tä ei löytynyt. Tarkista verkkoyhteys.</p>';
+      return;
+    }
+
+    const [y, m, d] = currentModalDate.split('-').map(Number);
+    const start = `${currentModalDate}`;
+    const endDate = new Date(y, m - 1, d + 1);
+    const end = `${endDate.getFullYear()}-${pad(endDate.getMonth() + 1)}-${pad(endDate.getDate())}`;
+
+    const url = `https://api.hel.fi/linkedevents/v1/event/?start=${start}&end=${end}&location=${placeId}&page_size=50`;
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      lastLinkedResults = (data.data || []).filter(item => {
+        // Only show events whose local (Helsinki) date matches the selected date
+        if (!item.start_time) return false;
+        const d = new Date(item.start_time);
+        const hel = new Date(d.toLocaleString('en-US', { timeZone: 'Europe/Helsinki' }));
+        const [sy, sm, sd] = currentModalDate.split('-').map(Number);
+        return hel.getFullYear() === sy && hel.getMonth() + 1 === sm && hel.getDate() === sd;
+      });
+      if (lastLinkedResults.length === 0) {
+        resultsDiv.innerHTML = '<p>Ei tapahtumia Espanlavalla tälle päivälle.</p>';
+        return;
+      }
+      let html = '<h4 style="margin-top:12px;font-size:13px;">Linked Events - Espanlava (klikkaa tuodaksesi):</h4>';
+      lastLinkedResults.forEach((item, i) => {
+        const name = item.name?.fi || item.name?.en || 'Nimetön tapahtuma';
+        // Convert UTC to Helsinki time for display
+        let startTime = '';
+        if (item.start_time) {
+          const d = new Date(item.start_time);
+          startTime = d.toLocaleTimeString('fi-FI', { timeZone: 'Europe/Helsinki', hour: '2-digit', minute: '2-digit' });
+        }
+        // Calculate duration for display
+        let durationLabel = '';
+        if (item.end_time && item.start_time) {
+          const s = new Date(item.start_time);
+          const e = new Date(item.end_time);
+          const mins = Math.round((e - s) / 60000);
+          if (mins > 0) {
+            const h = Math.floor(mins / 60);
+            const min = mins % 60;
+            durationLabel = `Kesto: ${h}h ${min}m`;
+          }
+        }
+        html += `
+          <div class="linked-result" data-index="${i}">
+            <strong>${escapeHtml(name)}</strong>
+            ${startTime ? `<div style="font-size:11px;color:#666;">Alkaa: ${startTime}${durationLabel ? ' · ' + durationLabel : ''}</div>` : ''}
+          </div>
+        `;
+      });
+      resultsDiv.innerHTML = html;
+      resultsDiv.querySelectorAll('.linked-result').forEach(el => {
+        el.addEventListener('click', () => {
+          const idx = parseInt(el.dataset.index, 10);
+          const item = lastLinkedResults[idx];
+          document.getElementById('inp-title').value = item.name?.fi || item.name?.en || '';
+          let t = '';
+          if (item.start_time) {
+            const d = new Date(item.start_time);
+            t = d.toLocaleTimeString('fi-FI', { timeZone: 'Europe/Helsinki', hour: '2-digit', minute: '2-digit' });
+          }
+          document.getElementById('inp-time').value = t.replace(':', '.');
+          // Guess duration from end_time if available, otherwise default to 2h
+          if (item.end_time && item.start_time) {
+            const s = new Date(item.start_time);
+            const e = new Date(item.end_time);
+            const mins = Math.round((e - s) / 60000);
+            const h = Math.floor(mins / 60);
+            const min = mins % 60;
+            if (mins > 0) document.getElementById('inp-duration').value = `${h}h ${min}m`;
+            else document.getElementById('inp-duration').value = '2h 0m';
+          } else {
+            document.getElementById('inp-duration').value = '2h 0m';
+          }
+          selectStyle(randomStyle());
+          resultsDiv.innerHTML = '<p style="color:green;font-size:12px;">Tapahtuma tuotu lomakkeelle. Voit muokata tietoja ja tallentaa.</p>';
+        });
+      });
+    } catch (e) {
+      resultsDiv.innerHTML = '<p style="color:red;">Virhe ladattaessa tapahtumia. Tarkista verkkoyhteys.</p>';
+    }
+  }
+
+  // ======================
+  //  GOOGLE CALENDAR PUSH
+  // ======================
+  function toggleAuthHelp() {
+    document.getElementById('auth-help').classList.toggle('active');
+  }
+  function toggleSettings() {
+    document.getElementById('settings-area').classList.toggle('mobile-collapsed');
+  }
+
+  function connectGoogle() {
+    if (window.location.protocol === 'file:') {
+      alert('Google-todennus ei toimi suoraan tiedostosta avattuna.\n\nKäynnistä paikallinen palvelin, esimerkiksi:\nnpx serve\ntai\npython -m http.server\n\nAvaa sitten http://localhost:... selaimessa.');
+      return;
+    }
+
+    if (!tokenClient) {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.onload = () => {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: HARDCODED_CLIENT_ID,
+          scope: 'https://www.googleapis.com/auth/calendar.events',
+          callback: (tokenResponse) => {
+            if (tokenResponse && tokenResponse.access_token) {
+              googleToken = tokenResponse.access_token;
+              googleTokenExp = Date.now() + (tokenResponse.expires_in * 1000);
+              document.getElementById('auth-status').textContent = '✅ Yhdistetty';
+            }
+          },
+        });
+        tokenClient.requestAccessToken();
+      };
+      document.head.appendChild(script);
+    } else {
+      tokenClient.requestAccessToken();
+    }
+  }
+
+  function parseTime(timeStr) {
+    const m = timeStr.match(/(\d{1,2})\.(\d{2})/);
+    if (m) return { hh: parseInt(m[1], 10), mm: parseInt(m[2], 10) };
+    return null;
+  }
+  function parseDuration(durStr) {
+    if (!durStr || durStr === '---' || durStr === '--') return null;
+    // "2h 0m", "2h", "1h 45m", "kesto 2h 15m"
+    const m = durStr.match(/(\d+)\s*h\s*(\d*)\s*m?/i);
+    if (m) {
+      const h = parseInt(m[1], 10) || 0;
+      const min = parseInt(m[2], 10) || 0;
+      return h * 60 + min;
+    }
+    // "90m", "90 min"
+    const m2 = durStr.match(/(\d+)\s*m/i);
+    if (m2) return parseInt(m2[1], 10);
+    return null;
+  }
+
+  async function pullFromGoogle() {
+    if (!googleToken || Date.now() > googleTokenExp) {
+      alert('Yhdistä Google Kalenteriin ensin (Client ID + 🔗 Yhdistä).');
+      return;
+    }
+    const btn = document.getElementById('btn-pull-google');
+    const originalText = btn.textContent;
+    btn.textContent = '⏳ Synkronoidaan...';
+    btn.disabled = true;
+
+    try {
+      const y = currentYear;
+      const m = currentMonth;
+      const start = fmtDate(y, m - 1, 1); // fetch previous month too
+      let nextY = y, nextM = m + 2;
+      if (nextM > 11) { nextM -= 12; nextY++; }
+      const end = fmtDate(nextY, nextM, 1);
+
+      const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events?timeMin=${start}T00:00:00Z&timeMax=${end}T00:00:00Z&singleEvents=true&orderBy=startTime`;
+      const res = await fetch(url, {
+        headers: { 'Authorization': 'Bearer ' + googleToken }
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || 'HTTP ' + res.status);
+      }
+      const data = await res.json();
+      const items = data.items || [];
+
+      let added = 0;
+      let skipped = 0;
+      const log = [];
+
+      // Build a lookup of Google event IDs
+      const googleIdSet = new Set(items.map(i => i.id));
+
+      items.forEach(item => {
+        const title = item.summary;
+        if (!title) return;
+        // Skip birthdays and system-calendar events
+        const lower = title.toLowerCase();
+        if (lower.includes('birthday') || lower.includes('syntymäpäivä') || lower.includes('name day') || lower.includes('nimipäivä') || lower.includes('γενέθλια')) return;
+        const orgEmail = item.organizer?.email || '';
+        if (orgEmail.includes('group.v.calendar.google.com') || orgEmail.includes('#contacts@')) return;
+
+        // Determine date in Helsinki time
+        const startRaw = item.start?.dateTime || item.start?.date;
+        if (!startRaw) return;
+        const d = new Date(startRaw);
+        const helDate = d.toLocaleDateString('sv-SE', { timeZone: 'Europe/Helsinki' });
+        const [ey, em, ed] = helDate.split('-').map(Number);
+        const dateKey = `${ey}-${pad(em)}-${pad(ed)}`;
+
+        // Parse time
+        const startTime = item.start?.dateTime
+          ? d.toLocaleTimeString('fi-FI', { timeZone: 'Europe/Helsinki', hour: '2-digit', minute: '2-digit' }).replace(':', '.')
+          : '';
+
+        // Parse duration
+        let durationStr = '';
+        if (item.end?.dateTime && item.start?.dateTime) {
+          const s = new Date(item.start.dateTime);
+          const e = new Date(item.end.dateTime);
+          const mins = Math.round((e - s) / 60000);
+          const hh = Math.floor(mins / 60);
+          const mm = mins % 60;
+          if (mins > 0) durationStr = `kesto ${hh}h ${pad(mm)}m`;
+        }
+
+        // Parse description for metadata
+        let style = 'blue';
+        let intermission = '';
+        const desc = item.description || '';
+        const styleMatch = desc.match(/Tyyli:\s*(\w+)/);
+        if (styleMatch) style = styleMatch[1];
+        const interMatch = desc.match(/Väliaika:\s*([^|]+)/);
+        if (interMatch) intermission = interMatch[1].trim();
+
+        // Try to find existing local event by Google ID
+        let found = false;
+        for (const dk in eventDB) {
+          const evs = eventDB[dk];
+          for (let i = 0; i < evs.length; i++) {
+            if (evs[i].googleId === item.id) {
+              // Update existing event
+              evs[i].title = title;
+              evs[i].time = startTime;
+              evs[i].duration = durationStr;
+              evs[i].intermission = intermission;
+              evs[i].style = style;
+              // If date changed, move it
+              if (dk !== dateKey) {
+                const moved = evs.splice(i, 1)[0];
+                if (evs.length === 0) delete eventDB[dk];
+                if (!eventDB[dateKey]) eventDB[dateKey] = [];
+                eventDB[dateKey].push(moved);
+              }
+              found = true;
+              log.push(`🔄 Päivitetty: ${title}`);
+              break;
+            }
+          }
+          if (found) break;
+        }
+        if (found) return;
+
+        // New event — check by title to avoid duplicates
+        const existing = eventDB[dateKey] || [];
+        if (existing.some(e => e.title === title)) {
+          skipped++;
+          return;
+        }
+
+        const ev = { title, time: startTime, duration: durationStr, intermission, style: randomStyle(), googleId: item.id };
+        if (!eventDB[dateKey]) eventDB[dateKey] = [];
+        eventDB[dateKey].push(ev);
+        added++;
+        log.push(`➕ Lisätty: ${title}`);
+      });
+
+      // Find events deleted in Google Calendar
+      const orphaned = [];
+      for (const dk in eventDB) {
+        eventDB[dk].forEach((ev, idx) => {
+          if (ev.googleId && !googleIdSet.has(ev.googleId)) {
+            orphaned.push({ dateKey: dk, index: idx, title: ev.title });
+          }
+        });
+      }
+
+      saveStorage();
+      renderAll();
+
+      let msg = `Synkronointi valmis!\nLisätty: ${added}\nPäivitetty: ${log.filter(l => l.startsWith('🔄')).length}\nOhitettu: ${skipped}`;
+      if (orphaned.length > 0) {
+        msg += `\n\nPoistettu Googlesta (${orphaned.length} kpl):\n` + orphaned.slice(0, 8).map(o => `– ${o.title}`).join('\n');
+      }
+      msg += '\n\n' + log.slice(0, 10).join('\n') + (log.length > 10 ? '\n...' : '');
+      alert(msg);
+    } catch (err) {
+      console.error(err);
+      alert('Virhe synkronoinnissa: ' + err.message);
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  }
+
+  async function pushMonthToGoogle() {
+    if (!googleToken || Date.now() > googleTokenExp) {
+      alert('Yhdistä Google Kalenteriin ensin (Client ID + 🔗 Yhdistä).');
+      return;
+    }
+    const btn = document.getElementById('btn-push-month');
+    const originalText = btn.textContent;
+    btn.textContent = '⏳ Viedään...';
+    btn.disabled = true;
+
+    const y = currentYear;
+    const m = currentMonth;
+    let pushed = 0;
+    let failed = 0;
+    const log = [];
+
+    // Collect all events for this month
+    const monthEvents = [];
+    for (let d = 1; d <= 31; d++) {
+      const dateKey = fmtDate(y, m, d);
+      const evs = eventDB[dateKey] || [];
+      evs.forEach((ev, idx) => {
+        monthEvents.push({ dateKey, ev, idx });
+      });
+    }
+
+    if (monthEvents.length === 0) {
+      alert('Ei tapahtumia tässä kuukaudessa vietäväksi.');
+      btn.textContent = originalText;
+      btn.disabled = false;
+      return;
+    }
+
+    for (const item of monthEvents) {
+      try {
+        const result = await pushToGoogle(item.ev, item.dateKey);
+        if (result.id) item.ev.googleId = result.id;
+        pushed++;
+        log.push(`✅ ${item.dateKey}: ${item.ev.title}`);
+      } catch (err) {
+        failed++;
+        log.push(`❌ ${item.dateKey}: ${item.ev.title} — ${err.message}`);
+      }
+    }
+    saveStorage();
+
+    // Clean up orphaned Google events
+    try {
+      const start = fmtDate(y, m, 1);
+      let nextY = y, nextM = m + 1;
+      if (nextM > 11) { nextM = 0; nextY++; }
+      const end = fmtDate(nextY, nextM, 1);
+      const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(HARDCODED_CALENDAR_ID)}/events?timeMin=${start}T00:00:00Z&timeMax=${end}T00:00:00Z&singleEvents=true`;
+      const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + googleToken } });
+      if (res.ok) {
+        const data = await res.json();
+        const localIds = new Set();
+        for (const dk in eventDB) {
+          eventDB[dk].forEach(ev => { if (ev.googleId) localIds.add(ev.googleId); });
+        }
+        const orphans = (data.items || []).filter(item => {
+          const desc = item.description || '';
+          if (!desc.includes('Tyyli:')) return false;
+          return !localIds.has(item.id);
+        });
+        if (orphans.length > 0) {
+          const titles = orphans.map(o => o.summary).join('\n');
+          if (confirm(`Poista ${orphans.length} vanhentunutta tapahtumaa OMASTA Google Kalenterista (primary)?\n\n${titles}`)) {
+            for (const o of orphans) await deleteFromGoogle(o.id);
+            log.push(`🗑️ Poistettu Googlesta: ${orphans.length} vanhentunutta`);
+          }
+        }
+      }
+    } catch (e) { /* ignore cleanup errors */ }
+
+    btn.textContent = originalText;
+    btn.disabled = false;
+    alert(`Vienti valmis!\nOnnistui: ${pushed}\nEpäonnistui: ${failed}\n\n` + log.slice(0, 15).join('\n') + (log.length > 15 ? '\n...' : ''));
+  }
+
+  async function importMonthFromLinkedEvents() {
+    const btn = document.getElementById('btn-import-month');
+    const originalText = btn.textContent;
+    btn.textContent = '⏳ Ladataan...';
+    btn.disabled = true;
+
+    try {
+      const placeId = await resolveEspanlavaPlace();
+      if (!placeId) {
+        alert('Espanlavan paikka-ID:tä ei löytynyt. Tarkista verkkoyhteys.');
+        return;
+      }
+
+      const y = currentYear;
+      const m = currentMonth;
+      const start = fmtDate(y, m, 1);
+      let nextY = y, nextM = m + 1;
+      if (nextM > 11) { nextM = 0; nextY++; }
+      const end = fmtDate(nextY, nextM, 1);
+
+      let allItems = [];
+      let url = `https://api.hel.fi/linkedevents/v1/event/?start=${start}&end=${end}&location=${placeId}&page_size=100`;
+      while (url) {
+        const res = await fetch(url);
+        const data = await res.json();
+        allItems = allItems.concat(data.data || []);
+        url = data.meta?.next || null;
+      }
+
+      let added = 0;
+      let skipped = 0;
+      const log = [];
+
+      allItems.forEach(item => {
+        if (!item.start_time) return;
+        const d = new Date(item.start_time);
+        const helDate = d.toLocaleDateString('sv-SE', { timeZone: 'Europe/Helsinki' });
+        const [ey, em, ed] = helDate.split('-').map(Number);
+        if (ey !== y || em !== m + 1) return;
+
+        const dateKey = `${ey}-${pad(em)}-${pad(ed)}`;
+        const title = item.name?.fi || item.name?.en || 'Nimetön tapahtuma';
+
+        const existing = eventDB[dateKey] || [];
+        if (existing.some(e => e.title === title)) {
+          skipped++;
+          return;
+        }
+
+        const startTime = d.toLocaleTimeString('fi-FI', { timeZone: 'Europe/Helsinki', hour: '2-digit', minute: '2-digit' }).replace(':', '.');
+        let durationStr = 'kesto 2h 0m';
+        if (item.end_time) {
+          const s = new Date(item.start_time);
+          const e = new Date(item.end_time);
+          const mins = Math.round((e - s) / 60000);
+          const hh = Math.floor(mins / 60);
+          const mm = mins % 60;
+          if (mins > 0) durationStr = `kesto ${hh}h ${pad(mm)}m`;
+        }
+
+        const ev = {
+          title,
+          time: startTime,
+          duration: durationStr,
+          intermission: '',
+          style: randomStyle()
+        };
+
+        if (!eventDB[dateKey]) eventDB[dateKey] = [];
+        eventDB[dateKey].push(ev);
+        added++;
+        log.push(`${dateKey}: ${title}`);
+      });
+
+      saveStorage();
+      renderAll();
+
+      if (added === 0 && skipped === 0) {
+        alert('Kuukaudelta ei löytynyt tapahtumia Espanlavalta.');
+      } else {
+        let msg = `Linked Events -tuonti valmis!\nLisätty: ${added}\nOhitettu (jo kalenterissa): ${skipped}`;
+        if (log.length > 0) msg += '\n\n' + log.slice(0, 12).join('\n') + (log.length > 12 ? '\n...' : '');
+        alert(msg);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Virhe ladattaessa tapahtumia: ' + err.message);
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  }
+
+  async function deleteFromGoogle(googleId) {
+    if (!googleId || !googleToken || Date.now() > googleTokenExp) return;
+    try {
+      const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(HARDCODED_CALENDAR_ID)}/events/${googleId}`;
+      const res = await fetch(url, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + googleToken }
+      });
+      if (res.status === 404) return;
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+    } catch (err) {
+      console.error('Google delete failed:', err);
+    }
+  }
+
+  async function pushToGoogle(ev, dateStr) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const t = parseTime(ev.time);
+    let payload;
+    if (t) {
+      const start = new Date(y, m - 1, d, t.hh, t.mm);
+      const mins = parseDuration(ev.duration);
+      const end = new Date(start.getTime() + mins * 60000);
+      payload = {
+        summary: ev.title,
+        start: { dateTime: start.toISOString(), timeZone: 'Europe/Helsinki' },
+        end: { dateTime: end.toISOString(), timeZone: 'Europe/Helsinki' },
+      };
+    } else {
+      payload = {
+        summary: ev.title,
+        start: { date: dateStr },
+        end: { date: dateStr },
+      };
+    }
+
+    // Build description from our custom metadata
+    const descParts = [];
+    if (ev.duration) descParts.push(`Kesto: ${ev.duration}`);
+    if (ev.intermission) descParts.push(`Väliaika: ${ev.intermission}`);
+    if (ev.style) descParts.push(`Tyyli: ${ev.style}`);
+    if (descParts.length > 0) payload.description = descParts.join(' | ');
+
+    let url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(HARDCODED_CALENDAR_ID)}/events`;
+    let method = 'POST';
+
+    if (ev.googleId) {
+      url += `/${ev.googleId}`;
+      method = 'PATCH';
+    }
+
+    let res = await fetch(url, {
+      method,
+      headers: {
+        'Authorization': 'Bearer ' + googleToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    // If event was deleted in Google, clear ID and recreate
+    if (res.status === 404 && ev.googleId) {
+      delete ev.googleId;
+      url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(HARDCODED_CALENDAR_ID)}/events`;
+      res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + googleToken,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'HTTP ' + res.status);
+    }
+    const result = await res.json();
+    ev.googleId = result.id;
+    return result;
+  }
+
+  // ======================
+  //  EVENT POPUP
+  // ======================
+  function eventClick(e, dateKey, index) {
+    if (e.ctrlKey || e.metaKey) return;
+    if (Date.now() - lastDragTime < 150) return;
+    openEventPopup(dateKey, index);
+  }
+
+  function openEventPopup(dateKey, index) {
+    popupEventDateKey = dateKey;
+    popupEventIndex = index;
+    const ev = eventDB[dateKey][index];
+    document.getElementById('event-popup-header').textContent = ev.title || 'Tapahtuma';
+    renderEventPopup();
+    document.getElementById('event-popup-modal').classList.add('active');
+  }
+
+  function closeEventPopup() {
+    document.getElementById('event-popup-modal').classList.remove('active');
+    popupEventDateKey = null;
+    popupEventIndex = null;
+    timelineDrag = null;
+  }
+
+  document.getElementById('event-popup-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'event-popup-modal') closeEventPopup();
+  });
+
+  function openDayModalFromPopup() {
+    if (!popupEventDateKey) return;
+    closeEventPopup();
+    openDayModal(popupEventDateKey);
+  }
+
+  function formatEndTime(hh, mm, durationMinutes) {
+    const total = hh * 60 + mm + durationMinutes;
+    const endH = Math.floor(total / 60) % 24;
+    const endM = total % 60;
+    return `${endH}.${pad(endM)}`;
+  }
+
+  function getEventTop(hh, mm) {
+    const slotIndex = (hh - TIMELINE_START_HOUR) * 4 + Math.round(mm / 15);
+    return slotIndex * SLOT_HEIGHT;
+  }
+
+  function getEventHeight(durationMinutes) {
+    if (durationMinutes === null || durationMinutes === undefined) {
+      return 2 * SLOT_HEIGHT; // minimal 30 min block for unknown duration
+    }
+    const slots = Math.max(2, Math.round(durationMinutes / 15));
+    return slots * SLOT_HEIGHT;
+  }
+
+  function renderEventPopup() {
+    if (!popupEventDateKey || popupEventIndex === null) return;
+    const ev = eventDB[popupEventDateKey][popupEventIndex];
+
+    // Render timeline
+    const timeline = document.getElementById('day-timeline');
+    const totalSlots = (TIMELINE_END_HOUR - TIMELINE_START_HOUR) * 4;
+    let html = '';
+
+    for (let i = 0; i < totalSlots; i++) {
+      const totalMinutes = i * 15;
+      const h = TIMELINE_START_HOUR + Math.floor(totalMinutes / 60);
+      const m = totalMinutes % 60;
+      const isHour = m === 0;
+      const timeLabel = isHour ? `${h}:00` : '';
+      html += `<div class="time-slot ${isHour ? 'hour-slot' : ''}" style="height:${SLOT_HEIGHT}px;">
+        <span class="time-label">${timeLabel}</span>
+      </div>`;
+    }
+
+    // Render all day events on the timeline
+    const dayEvents = eventDB[popupEventDateKey] || [];
+    dayEvents.forEach((dev, idx) => {
+      const t = parseTime(dev.time);
+      if (t && t.hh >= TIMELINE_START_HOUR && t.hh < TIMELINE_END_HOUR) {
+        const dur = parseDuration(dev.duration);
+        const top = getEventTop(t.hh, t.mm);
+        const height = getEventHeight(dur);
+        const timeLabel = dur !== null
+          ? `${t.hh}.${pad(t.mm)} – ${formatEndTime(t.hh, t.mm, dur)} (${Math.round(dur/60*10)/10}h)`
+          : `${t.hh}.${pad(t.mm)}`;
+        const isActive = idx === popupEventIndex;
+        html += `<div class="timeline-event event-${dev.style} ${isActive ? 'timeline-active' : ''}"
+          style="top:${top}px;height:${height}px;${isActive ? '' : 'opacity:0.85;cursor:default;'}"
+          ${isActive ? 'onmousedown="startTimelineDrag(event)"' : ''}>
+          <span class="te-title">${escapeHtml(dev.title)}</span>
+          <span class="te-time">${timeLabel}</span>
+        </div>`;
+      } else if (dev.time) {
+        const isActive = idx === popupEventIndex;
+        html += `<div class="timeline-event event-${dev.style} ${isActive ? 'timeline-active' : ''}"
+          style="top:4px;height:auto;position:relative;left:0;right:0;margin:4px 8px;${isActive ? '' : 'opacity:0.85;'}">
+          <span class="te-title">${escapeHtml(dev.title)}</span>
+          <span class="te-time">${escapeHtml(dev.time)}</span>
+        </div>`;
+      }
+    });
+
+    timeline.innerHTML = html;
+
+    // Scroll timeline to the active event
+    setTimeout(() => {
+      const activeEl = timeline.querySelector('.timeline-active');
+      if (activeEl) activeEl.scrollIntoView({ block: 'center', behavior: 'instant' });
+    }, 0);
+
+    // Render info panel
+    const info = document.getElementById('event-popup-info');
+
+    // List other events on same day
+    let otherEventsHtml = '';
+    if (dayEvents.length > 1) {
+      otherEventsHtml = `<div class="day-events-list">
+        <h4>Muut tapahtumat tänään (${dayEvents.length - 1})</h4>`;
+      dayEvents.forEach((dev, i) => {
+        if (i === popupEventIndex) return;
+        const dmeta = [dev.time, dev.duration, dev.intermission].filter(Boolean).join(', ');
+        otherEventsHtml += `<div class="mini-event event-${dev.style}" onclick="switchPopupEvent(${i})">
+          <strong>${escapeHtml(dev.title)}</strong>
+          ${dmeta ? `<div style="font-size:11px;color:#666;">${escapeHtml(dmeta)}</div>` : ''}
+        </div>`;
+      });
+      otherEventsHtml += '</div>';
+    }
+
+    info.innerHTML = `
+      <div class="info-group">
+        <label>Otsikko</label>
+        <div class="info-value large">${escapeHtml(ev.title)}</div>
+      </div>
+      <div class="info-group">
+        <label>Päivämäärä</label>
+        <div class="info-value">${formatDateNice(popupEventDateKey)}</div>
+      </div>
+      <div class="info-group">
+        <label>Aika</label>
+        <div class="info-value">${ev.time || '—'}</div>
+      </div>
+      <div class="info-group">
+        <label>Kesto</label>
+        <div class="info-value">${ev.duration || '—'}</div>
+      </div>
+      <div class="info-group">
+        <label>Väliaika</label>
+        <div class="info-value">${ev.intermission || '—'}</div>
+      </div>
+      <div class="info-group">
+        <label>Tyyli</label>
+        <div class="info-style-swatch event-${ev.style}" title="${ev.style}"></div>
+        <div style="font-size:11px;color:#888;margin-top:4px;">${ev.style}</div>
+      </div>
+      ${commentDB[popupEventDateKey] ? `
+      <div class="info-group">
+        <label>Päivän kommentti</label>
+        <div class="info-value" style="font-style:italic;color:#555;">${escapeHtml(commentDB[popupEventDateKey])}</div>
+      </div>
+      ` : ''}
+      ${otherEventsHtml}
+    `;
+  }
+
+  function switchPopupEvent(newIndex) {
+    popupEventIndex = newIndex;
+    const ev = eventDB[popupEventDateKey][newIndex];
+    document.getElementById('event-popup-header').textContent = ev.title || 'Tapahtuma';
+    renderEventPopup();
+  }
+
+  function startTimelineDrag(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const evEl = e.currentTarget;
+    timelineDrag = {
+      el: evEl,
+      startY: e.clientY,
+      startTop: parseFloat(evEl.style.top) || 0,
+      slotHeight: SLOT_HEIGHT
+    };
+    document.addEventListener('mousemove', onTimelineDragMove);
+    document.addEventListener('mouseup', endTimelineDrag);
+  }
+
+  function onTimelineDragMove(e) {
+    if (!timelineDrag) return;
+    const delta = e.clientY - timelineDrag.startY;
+    let newTop = timelineDrag.startTop + delta;
+    if (newTop < 0) newTop = 0;
+    const maxTop = timelineDrag.el.parentElement.offsetHeight - timelineDrag.el.offsetHeight;
+    if (newTop > maxTop) newTop = maxTop;
+    timelineDrag.el.style.top = newTop + 'px';
+  }
+
+  function endTimelineDrag(e) {
+    if (!timelineDrag) return;
+    const slotHeight = timelineDrag.slotHeight;
+    const snappedSlots = Math.round(parseFloat(timelineDrag.el.style.top) / slotHeight);
+    const snappedTop = snappedSlots * slotHeight;
+    timelineDrag.el.style.top = snappedTop + 'px';
+
+    // Calculate new time
+    const totalMinutes = snappedSlots * 15;
+    const hh = TIMELINE_START_HOUR + Math.floor(totalMinutes / 60);
+    const mm = totalMinutes % 60;
+
+    // Update event
+    const ev = eventDB[popupEventDateKey][popupEventIndex];
+    ev.time = `${hh}.${pad(mm)}`;
+    saveStorage();
+    renderAll();
+    renderEventPopup(); // refresh to show updated time and position
+
+    timelineDrag = null;
+    document.removeEventListener('mousemove', onTimelineDragMove);
+    document.removeEventListener('mouseup', endTimelineDrag);
+  }
+
+  // ======================
+  //  INIT
+  // ======================
+  buildStylePicker();
+  (async () => {
+    await loadStorage();
+    renderAll();
+  })();
+</script>
+</body>
+</html>

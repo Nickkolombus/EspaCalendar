@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Työkalenteri — Katselu</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: #f4f4f4;
+    color: #222;
+    padding: 20px;
+  }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 20px;
+  }
+
+  .top-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .mini-calendar-wrap {
+    width: 160px;
+  }
+  .mini-calendar-wrap h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+  }
+  .mini-calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    font-size: 11px;
+    text-align: center;
+  }
+  .mini-calendar .day-label {
+    font-weight: bold;
+    font-size: 10px;
+  }
+  .mini-calendar .day {
+    padding: 2px;
+  }
+  .mini-calendar .other-month {
+    color: #bbb;
+  }
+
+  .month-title {
+    text-align: center;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .month-title h1 {
+    font-size: 56px;
+    font-weight: 300;
+    color: #b8d68c;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    line-height: 1;
+    margin: 0;
+  }
+  .nav-buttons {
+    margin-top: 8px;
+  }
+  .nav-buttons button, .toolbar button {
+    background: #eee;
+    border: 1px solid #ccc;
+    padding: 4px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    margin: 0 4px;
+  }
+  .nav-buttons button:hover, .toolbar button:hover {
+    background: #ddd;
+  }
+
+  .toolbar {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .main-calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    border-top: 2px solid #444;
+    border-left: 1px solid #888;
+  }
+  .day-header {
+    background: #444;
+    color: #fff;
+    text-align: center;
+    padding: 6px 0;
+    font-weight: bold;
+    font-size: 13px;
+    text-transform: uppercase;
+    border-right: 1px solid #666;
+    border-bottom: 2px solid #444;
+  }
+  .day-cell {
+    border-right: 1px solid #888;
+    border-bottom: 1px solid #888;
+    min-height: 110px;
+    padding: 4px;
+    position: relative;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+  }
+  .day-cell.other-month {
+    background: #e0e0e0;
+    color: #555;
+  }
+  .day-number {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  .events {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .event {
+    padding: 6px;
+    font-size: 12px;
+    line-height: 1.3;
+    border-radius: 0;
+    cursor: default;
+    flex-shrink: 0;
+  }
+  .event-title {
+    font-weight: 600;
+    font-style: italic;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .event-meta {
+    font-size: 11px;
+    color: #5599aa;
+    display: block;
+  }
+
+  /* All 24 color styles */
+  .event-blue { background: #8ee0f0; color: #fff; }
+  .event-blue .event-title { color: #fff; }
+  .event-blue .event-meta { color: #e0f8ff; }
+  .event-cyan { background: #70d8f0; color: #fff; }
+  .event-cyan .event-title { color: #fff; }
+  .event-cyan .event-meta { color: #e0f8ff; }
+  .event-peach { background: #ffe0cc; color: #c65d00; }
+  .event-peach .event-title { color: #c65d00; }
+  .event-peach .event-meta { color: #88bbcc; }
+  .event-salmon { background: #ffdac8; color: #cc5500; }
+  .event-salmon .event-title { color: #cc5500; }
+  .event-salmon .event-meta { color: #77aacc; }
+  .event-red { background: #cc0000; color: #fff; }
+  .event-red .event-title { color: #fff; font-style: italic; font-weight: 700; }
+  .event-red .event-meta { color: #aaddff; }
+  .event-green { background: #a8d46e; color: #fff; }
+  .event-green .event-title { color: #fff; }
+  .event-green .event-meta { color: #e0f8ff; }
+  .event-darkgreen { background: #44bb44; color: #fff; }
+  .event-darkgreen .event-title { color: #fff; font-style: italic; font-weight: 700; }
+  .event-darkgreen .event-meta { color: #e0f8ff; }
+  .event-yellow { background: #e8b058; color: #fff; }
+  .event-yellow .event-title { color: #fff; }
+  .event-yellow .event-meta { color: #e0f8ff; }
+  .event-dotted {
+    background-color: #fff;
+    background-image: radial-gradient(circle, #888 1px, transparent 1px);
+    background-size: 4px 4px;
+    color: #666;
+    font-style: italic;
+  }
+  .event-dotted .event-title { color: #666; font-style: italic; }
+  .event-dotted .event-meta { color: #88bbcc; }
+  .event-plain { background: transparent; color: #999; padding-left: 2px; }
+  .event-plain .event-title { color: #bbb; font-style: italic; font-weight: 400; }
+  .event-plain .event-meta { color: #88bbcc; }
+  .event-beige { background: #f5f0e8; color: #cc5555; }
+  .event-beige .event-title { color: #cc5555; font-weight: 700; }
+  .event-beige .event-meta { color: #88bbcc; }
+  .event-grayblue { background: #eef4f8; color: #446688; }
+  .event-grayblue .event-title { color: #446688; font-style: italic; }
+  .event-grayblue .event-meta { color: #88bbcc; }
+  .event-purple { background: #c8a8e8; color: #fff; }
+  .event-purple .event-title { color: #fff; }
+  .event-purple .event-meta { color: #f0e8ff; }
+  .event-pink { background: #f0a8d0; color: #fff; }
+  .event-pink .event-title { color: #fff; }
+  .event-pink .event-meta { color: #ffe8f4; }
+  .event-teal { background: #40c0b0; color: #fff; }
+  .event-teal .event-title { color: #fff; }
+  .event-teal .event-meta { color: #e0f8f4; }
+  .event-orange { background: #f08020; color: #fff; }
+  .event-orange .event-title { color: #fff; }
+  .event-orange .event-meta { color: #ffe8d0; }
+  .event-navy { background: #304860; color: #fff; }
+  .event-navy .event-title { color: #fff; }
+  .event-navy .event-meta { color: #a0c0e0; }
+  .event-lime { background: #c8e850; color: #445500; }
+  .event-lime .event-title { color: #445500; }
+  .event-lime .event-meta { color: #668822; }
+  .event-rose { background: #e86080; color: #fff; }
+  .event-rose .event-title { color: #fff; }
+  .event-rose .event-meta { color: #ffd0d8; }
+  .event-olive { background: #a0a040; color: #fff; }
+  .event-olive .event-title { color: #fff; }
+  .event-olive .event-meta { color: #f0f0d0; }
+  .event-gray { background: #c0c0c0; color: #444; }
+  .event-gray .event-title { color: #444; }
+  .event-gray .event-meta { color: #666; }
+  .event-mint { background: #a8f0c8; color: #226644; }
+  .event-mint .event-title { color: #226644; }
+  .event-mint .event-meta { color: #448866; }
+
+  .day-comment {
+    margin-top: auto;
+    padding: 4px;
+    background: #fffacd;
+    border: 1px dotted #ddb;
+    font-size: 11px;
+    font-style: italic;
+    color: #554;
+    word-break: break-word;
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    body { padding: 4px; }
+    .container { padding: 8px; border: none; overflow-x: auto; }
+    .top-header { flex-direction: column; align-items: center; gap: 8px; }
+    .mini-calendar-wrap { display: none; }
+    .month-title h1 { font-size: 32px; letter-spacing: 2px; }
+    .nav-buttons button { font-size: 12px; padding: 6px 10px; }
+    .toolbar { flex-direction: column; align-items: stretch; }
+    .toolbar button { width: 100%; margin: 2px 0; font-size: 13px; padding: 10px; }
+    .main-calendar { min-width: 720px; }
+    .day-header { font-size: 10px; padding: 4px 0; }
+    .day-cell { min-height: 70px; padding: 2px; }
+    .day-number { font-size: 11px; }
+    .event { padding: 3px; font-size: 10px; }
+    .event-title { font-size: 10px; }
+    .event-meta { display: none; }
+    .day-comment { font-size: 9px; padding: 2px; }
+  }
+
+  /* Event popup modal */
+  .event-popup-card { max-width: 900px; width: 90vw; max-height: 90vh; }
+  .event-popup-body { display: flex; flex-direction: row; height: 70vh; overflow: hidden; }
+  .event-popup-left { width: 55%; border-right: 1px solid #ddd; overflow-y: auto; padding: 0; background: #fafafa; }
+  .event-popup-right { width: 45%; padding: 24px; overflow-y: auto; }
+  .day-timeline { position: relative; }
+  .time-slot { height: 28px; border-bottom: 1px solid #e8e8e8; position: relative; }
+  .time-slot.hour-slot { border-bottom-color: #bbb; }
+  .time-label { position: absolute; left: 6px; top: -6px; font-size: 10px; color: #666; width: 36px; text-align: right; font-weight: 600; }
+  .time-slot:not(.hour-slot) .time-label { color: #aaa; font-weight: 400; font-size: 9px; }
+  .timeline-event { position: absolute; left: 48px; right: 8px; border-radius: 4px; padding: 5px 8px; font-size: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); z-index: 10; overflow: hidden; user-select: none; -webkit-user-select: none; }
+  .timeline-event .te-title { font-weight: 600; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .timeline-event .te-time { font-size: 10px; opacity: 0.9; display: block; }
+  .timeline-event.timeline-active { outline: 2px solid #444; outline-offset: 1px; z-index: 15; }
+  .info-group { margin-bottom: 20px; }
+  .info-group label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #888; margin-bottom: 4px; }
+  .info-group .info-value { font-size: 15px; color: #222; line-height: 1.4; }
+  .info-group .info-value.large { font-size: 22px; font-weight: 600; }
+  .info-style-swatch { width: 40px; height: 40px; border: 2px solid #ddd; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); }
+  .day-events-list { margin-top: 16px; padding-top: 16px; border-top: 1px solid #eee; }
+  .day-events-list h4 { font-size: 12px; text-transform: uppercase; color: #888; margin-bottom: 8px; }
+  .mini-event { padding: 8px; margin-bottom: 6px; font-size: 12px; border-left: 3px solid #ccc; background: #f8f8f8; cursor: pointer; color: #222 !important; }
+  .mini-event:hover { background: #f0f0f0; }
+  .mini-event.active { border-left-width: 5px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+  @media (max-width: 768px) {
+    .event-popup-card { max-width: 96vw; width: 96vw; }
+    .event-popup-body { flex-direction: column; height: auto; max-height: 80vh; }
+    .event-popup-left, .event-popup-right { width: 100%; border-right: none; }
+    .event-popup-left { max-height: 350px; border-bottom: 1px solid #ddd; }
+  }
+
+  /* Print */
+  @media print {
+    body { background: white; padding: 0; }
+    .container { border: none; max-width: 100%; }
+    .nav-buttons, .toolbar { display: none !important; }
+    .day-cell { page-break-inside: avoid; min-height: 90px; }
+    .event, .day-comment { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="top-header">
+    <div class="mini-calendar-wrap">
+      <h3 id="mini-prev-title"></h3>
+      <div class="mini-calendar" id="mini-prev"></div>
+    </div>
+    <div class="month-title">
+      <h1 id="main-title"></h1>
+      <div class="nav-buttons">
+        <button onclick="changeMonth(-1)">&#9664; Edellinen</button>
+        <button onclick="goToToday()">Tänään</button>
+        <button onclick="changeMonth(1)">Seuraava &#9654;</button>
+      </div>
+    </div>
+    <div class="mini-calendar-wrap">
+      <h3 id="mini-next-title"></h3>
+      <div class="mini-calendar" id="mini-next"></div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button onclick="window.print()">🖨️ Tulosta kuukausinäkymä</button>
+  </div>
+
+  <div class="main-calendar" id="main-calendar"></div>
+</div>
+
+<!-- Event Popup Modal -->
+<div id="event-popup-modal" class="modal-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;padding:20px;">
+  <div class="modal-card event-popup-card" style="background:#fff;max-height:90vh;overflow-y:auto;border:1px solid #888;box-shadow:0 4px 20px rgba(0,0,0,0.3);display:flex;flex-direction:column;">
+    <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#444;color:#fff;flex-shrink:0;">
+      <h2 id="event-popup-header" style="font-size:16px;margin:0;">Tapahtuma</h2>
+      <button onclick="closeEventPopup()" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1;">&times;</button>
+    </div>
+    <div class="event-popup-body">
+      <div class="event-popup-left">
+        <div class="day-timeline" id="day-timeline"></div>
+      </div>
+      <div class="event-popup-right" id="event-popup-info"></div>
+    </div>
+    <div class="modal-footer" style="padding:12px 16px;border-top:1px solid #ddd;display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0;">
+      <button onclick="closeEventPopup()" style="padding:6px 12px;cursor:pointer;border:1px solid #ccc;background:#eee;">Sulje</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const DEFAULT_EVENTS = {};
+
+  const MONTH_NAMES = [
+    "Tammikuu", "Helmikuu", "Maaliskuu", "Huhtikuu", "Toukokuu",
+    "Kesäkuu", "Heinäkuu", "Elokuu", "Syyskuu", "Lokakuu",
+    "Marraskuu", "Joulukuu"
+  ];
+  const SHORT_DAYS = ["Ma", "Ti", "Ke", "To", "Pe", "La", "Su"];
+
+  let eventDB = {};
+  let commentDB = {};
+  let currentYear = 2026;
+  let currentMonth = 4;
+  let popupEventDateKey = null;
+  let popupEventIndex = null;
+  const TIMELINE_START_HOUR = 7;
+  const TIMELINE_END_HOUR = 26;
+  const SLOT_HEIGHT = 28;
+  const WEEKDAYS = ['Sunnuntai','Maanantai','Tiistai','Keskiviikko','Torstai','Perjantai','Lauantai'];
+
+  // Supabase
+  const SUPABASE_URL = 'https://rvuzvmsdcrlmmyobzoen.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2dXp2bXNkY3JsbW15b2J6b2VuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NzI4NjcsImV4cCI6MjA5NDI0ODg2N30.wgwfesqQPqkhjqqRPWMo251yQ4UxAPubIX1Sud9CTbk';
+
+  function pad(n) { return n < 10 ? '0' + n : n; }
+  function fmtDate(y, m, d) { return `${y}-${pad(m + 1)}-${pad(d)}`; }
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+  function sortEventsByTime(events) {
+    return [...events].sort((a, b) => {
+      const ta = parseTime(a.time);
+      const tb = parseTime(b.time);
+      if (!ta && !tb) return 0;
+      if (!ta) return 1;
+      if (!tb) return -1;
+      return (ta.hh * 60 + ta.mm) - (tb.hh * 60 + tb.mm);
+    });
+  }
+
+  async function loadStorage() {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/calendar_state?id=eq.espanlava&select=*`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      });
+      const data = await res.json();
+      if (data && data[0]) {
+        eventDB = data[0].events || JSON.parse(JSON.stringify(DEFAULT_EVENTS));
+        commentDB = data[0].comments || {};
+      } else {
+        eventDB = JSON.parse(JSON.stringify(DEFAULT_EVENTS));
+        commentDB = {};
+      }
+    } catch (e) {
+      console.error('Load failed', e);
+      eventDB = JSON.parse(JSON.stringify(DEFAULT_EVENTS));
+      commentDB = {};
+    }
+  }
+
+  function getMonthData(year, month) {
+    const firstDay = new Date(year, month, 1);
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    let startIdx = firstDay.getDay() - 1;
+    if (startIdx < 0) startIdx = 6;
+    return { daysInMonth, startIdx };
+  }
+
+  function renderMiniCalendar(elId, titleId, year, month) {
+    const { daysInMonth, startIdx } = getMonthData(year, month);
+    const prevDays = new Date(year, month, 0).getDate();
+    let html = "";
+    SHORT_DAYS.forEach(d => { html += `<div class="day-label">${d}</div>`; });
+    for (let i = startIdx - 1; i >= 0; i--) {
+      html += `<div class="day other-month">${prevDays - i}</div>`;
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      html += `<div class="day">${d}</div>`;
+    }
+    const totalCells = startIdx + daysInMonth;
+    const remaining = (42 - totalCells) % 42;
+    for (let d = 1; d <= remaining; d++) {
+      html += `<div class="day other-month">${d}</div>`;
+    }
+    document.getElementById(elId).innerHTML = html;
+    document.getElementById(titleId).textContent = `${MONTH_NAMES[month].toUpperCase()} ${year}`;
+  }
+
+  function renderMainCalendar(year, month) {
+    const { daysInMonth, startIdx } = getMonthData(year, month);
+    const prevMonthDays = new Date(year, month, 0).getDate();
+    const calendar = document.getElementById("main-calendar");
+    let html = "";
+
+    SHORT_DAYS.forEach(d => {
+      html += `<div class="day-header">${d}</div>`;
+    });
+
+    for (let i = startIdx - 1; i >= 0; i--) {
+      const d = prevMonthDays - i;
+      html += `<div class="day-cell other-month"><div class="day-number">${d}</div></div>`;
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateKey = fmtDate(year, month, d);
+      const dayEvents = sortEventsByTime(eventDB[dateKey] || []);
+      let eventsHtml = "";
+      dayEvents.forEach((ev, idx) => {
+        const metaParts = [ev.time, ev.duration, ev.intermission].filter(Boolean).join(", ");
+        eventsHtml += `
+          <div class="event event-${ev.style}" onclick="openEventPopup('${dateKey}', ${idx})">
+            <span class="event-title">${escapeHtml(ev.title)}</span>
+            ${metaParts ? `<span class="event-meta">${escapeHtml(metaParts)}</span>` : ""}
+          </div>
+        `;
+      });
+      const commentHtml = commentDB[dateKey]
+        ? `<div class="day-comment">${escapeHtml(commentDB[dateKey])}</div>`
+        : "";
+      html += `
+        <div class="day-cell">
+          <div class="day-number">${d}</div>
+          <div class="events">${eventsHtml}</div>
+          ${commentHtml}
+        </div>
+      `;
+    }
+
+    const totalCells = startIdx + daysInMonth;
+    const remaining = (7 - (totalCells % 7)) % 7;
+    for (let d = 1; d <= remaining; d++) {
+      html += `<div class="day-cell other-month"><div class="day-number">${d}</div></div>`;
+    }
+
+    calendar.innerHTML = html;
+    document.getElementById("main-title").textContent = `${MONTH_NAMES[month].toUpperCase()} ${year}`;
+  }
+
+  function renderAll() {
+    const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+    const nextMonth = currentMonth === 11 ? 0 : currentMonth + 1;
+    const nextYear = currentMonth === 11 ? currentYear + 1 : currentYear;
+    renderMiniCalendar("mini-prev", "mini-prev-title", prevYear, prevMonth);
+    renderMiniCalendar("mini-next", "mini-next-title", nextYear, nextMonth);
+    renderMainCalendar(currentYear, currentMonth);
+  }
+
+  function changeMonth(delta) {
+    currentMonth += delta;
+    if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+    if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+    renderAll();
+  }
+  function goToToday() {
+    const now = new Date();
+    currentYear = now.getFullYear();
+    currentMonth = now.getMonth();
+    renderAll();
+  }
+
+  function pad(n) { return n < 10 ? '0' + n : n; }
+  function formatDateNice(dateKey) {
+    const [y, m, d] = dateKey.split('-').map(Number);
+    const wd = WEEKDAYS[new Date(y, m-1, d).getDay()];
+    return `${wd} ${d}.${m}.${y}`;
+  }
+  function parseTime(timeStr) {
+    const m = timeStr.match(/(\d{1,2})\.(\d{2})/);
+    if (m) return { hh: parseInt(m[1], 10), mm: parseInt(m[2], 10) };
+    return null;
+  }
+  function parseDuration(durStr) {
+    if (!durStr || durStr === '---' || durStr === '--') return null;
+    // "2h 0m", "2h", "1h 45m", "kesto 2h 15m"
+    const m = durStr.match(/(\d+)\s*h\s*(\d*)\s*m?/i);
+    if (m) {
+      const h = parseInt(m[1], 10) || 0;
+      const min = parseInt(m[2], 10) || 0;
+      return h * 60 + min;
+    }
+    // "90m", "90 min"
+    const m2 = durStr.match(/(\d+)\s*m/i);
+    if (m2) return parseInt(m2[1], 10);
+    return null;
+  }
+
+  function openEventPopup(dateKey, index) {
+    popupEventDateKey = dateKey;
+    popupEventIndex = index;
+    const ev = eventDB[dateKey][index];
+    document.getElementById('event-popup-header').textContent = ev.title || 'Tapahtuma';
+    renderEventPopup();
+    document.getElementById('event-popup-modal').style.display = 'flex';
+  }
+
+  function closeEventPopup() {
+    document.getElementById('event-popup-modal').style.display = 'none';
+    popupEventDateKey = null;
+    popupEventIndex = null;
+  }
+
+  function formatEndTime(hh, mm, durationMinutes) {
+    const total = hh * 60 + mm + durationMinutes;
+    const endH = Math.floor(total / 60) % 24;
+    const endM = total % 60;
+    return `${endH}.${pad(endM)}`;
+  }
+
+  function getEventTop(hh, mm) {
+    const slotIndex = (hh - TIMELINE_START_HOUR) * 4 + Math.round(mm / 15);
+    return slotIndex * SLOT_HEIGHT;
+  }
+
+  function getEventHeight(durationMinutes) {
+    if (durationMinutes === null || durationMinutes === undefined) {
+      return 2 * SLOT_HEIGHT; // minimal 30 min block for unknown duration
+    }
+    const slots = Math.max(2, Math.round(durationMinutes / 15));
+    return slots * SLOT_HEIGHT;
+  }
+
+  function renderEventPopup() {
+    if (!popupEventDateKey || popupEventIndex === null) return;
+    const ev = eventDB[popupEventDateKey][popupEventIndex];
+
+    const timeline = document.getElementById('day-timeline');
+    const totalSlots = (TIMELINE_END_HOUR - TIMELINE_START_HOUR) * 4;
+    let html = '';
+
+    for (let i = 0; i < totalSlots; i++) {
+      const totalMinutes = i * 15;
+      const h = TIMELINE_START_HOUR + Math.floor(totalMinutes / 60);
+      const m = totalMinutes % 60;
+      const isHour = m === 0;
+      const timeLabel = isHour ? `${h}:00` : '';
+      html += `<div class="time-slot ${isHour ? 'hour-slot' : ''}" style="height:${SLOT_HEIGHT}px;">
+        <span class="time-label">${timeLabel}</span>
+      </div>`;
+    }
+
+    const dayEvents = eventDB[popupEventDateKey] || [];
+    dayEvents.forEach((dev, idx) => {
+      const t = parseTime(dev.time);
+      if (t && t.hh >= TIMELINE_START_HOUR && t.hh < TIMELINE_END_HOUR) {
+        const dur = parseDuration(dev.duration);
+        const top = getEventTop(t.hh, t.mm);
+        const height = getEventHeight(dur);
+        const timeLabel = dur !== null
+          ? `${t.hh}.${pad(t.mm)} – ${formatEndTime(t.hh, t.mm, dur)} (${Math.round(dur/60*10)/10}h)`
+          : `${t.hh}.${pad(t.mm)}`;
+        const isActive = idx === popupEventIndex;
+        html += `<div class="timeline-event event-${dev.style} ${isActive ? 'timeline-active' : ''}"
+          style="top:${top}px;height:${height}px;${isActive ? '' : 'opacity:0.85;'}">
+          <span class="te-title">${escapeHtml(dev.title)}</span>
+          <span class="te-time">${timeLabel}</span>
+        </div>`;
+      } else if (dev.time) {
+        const isActive = idx === popupEventIndex;
+        html += `<div class="timeline-event event-${dev.style} ${isActive ? 'timeline-active' : ''}"
+          style="top:4px;height:auto;position:relative;left:0;right:0;margin:4px 8px;${isActive ? '' : 'opacity:0.85;'}">
+          <span class="te-title">${escapeHtml(dev.title)}</span>
+          <span class="te-time">${escapeHtml(dev.time)}</span>
+        </div>`;
+      }
+    });
+
+    timeline.innerHTML = html;
+
+    // Scroll timeline to the active event
+    setTimeout(() => {
+      const activeEl = timeline.querySelector('.timeline-active');
+      if (activeEl) activeEl.scrollIntoView({ block: 'center', behavior: 'instant' });
+    }, 0);
+
+    const info = document.getElementById('event-popup-info');
+    let otherEventsHtml = '';
+    if (dayEvents.length > 1) {
+      otherEventsHtml = `<div class="day-events-list">
+        <h4>Muut tapahtumat tänään (${dayEvents.length - 1})</h4>`;
+      dayEvents.forEach((dev, i) => {
+        if (i === popupEventIndex) return;
+        const dmeta = [dev.time, dev.duration, dev.intermission].filter(Boolean).join(', ');
+        otherEventsHtml += `<div class="mini-event event-${dev.style}" onclick="switchPopupEvent(${i})">
+          <strong>${escapeHtml(dev.title)}</strong>
+          ${dmeta ? `<div style="font-size:11px;color:#666;">${escapeHtml(dmeta)}</div>` : ''}
+        </div>`;
+      });
+      otherEventsHtml += '</div>';
+    }
+
+    info.innerHTML = `
+      <div class="info-group">
+        <label>Otsikko</label>
+        <div class="info-value large">${escapeHtml(ev.title)}</div>
+      </div>
+      <div class="info-group">
+        <label>Päivämäärä</label>
+        <div class="info-value">${formatDateNice(popupEventDateKey)}</div>
+      </div>
+      <div class="info-group">
+        <label>Aika</label>
+        <div class="info-value">${ev.time || '—'}</div>
+      </div>
+      <div class="info-group">
+        <label>Kesto</label>
+        <div class="info-value">${ev.duration || '—'}</div>
+      </div>
+      <div class="info-group">
+        <label>Väliaika</label>
+        <div class="info-value">${ev.intermission || '—'}</div>
+      </div>
+      <div class="info-group">
+        <label>Tyyli</label>
+        <div class="info-style-swatch event-${ev.style}" title="${ev.style}"></div>
+        <div style="font-size:11px;color:#888;margin-top:4px;">${ev.style}</div>
+      </div>
+      ${commentDB[popupEventDateKey] ? `
+      <div class="info-group">
+        <label>Päivän kommentti</label>
+        <div class="info-value" style="font-style:italic;color:#555;">${escapeHtml(commentDB[popupEventDateKey])}</div>
+      </div>
+      ` : ''}
+      ${otherEventsHtml}
+    `;
+  }
+
+  function switchPopupEvent(newIndex) {
+    popupEventIndex = newIndex;
+    const ev = eventDB[popupEventDateKey][newIndex];
+    document.getElementById('event-popup-header').textContent = ev.title || 'Tapahtuma';
+    renderEventPopup();
+  }
+
+  (async () => {
+    await loadStorage();
+    renderAll();
+  })();
+</script>
+</body>
+</html>
